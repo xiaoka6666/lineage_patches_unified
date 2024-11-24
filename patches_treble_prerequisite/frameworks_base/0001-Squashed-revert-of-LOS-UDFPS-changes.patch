@@ -1,10 +1,12 @@
-From 927ad33505d92b92867c6c0b0c0d412780be2e93 Mon Sep 17 00:00:00 2001
+From dcfe71c44465e4f2e3e148310837be7178195d28 Mon Sep 17 00:00:00 2001
 From: Andy CrossGate Yan <GeForce8800Ultra@gmail.com>
-Date: Sun, 21 Apr 2024 18:02:54 +0800
+Date: Mon, 18 Nov 2024 21:31:29 +0800
 Subject: [PATCH 1/2] Squashed revert of LOS UDFPS changes
 
-Way less than FOD, but reverting them nonetheless to keep in line with PHH AOSP
+Just to keep in line with PHH AOSP
 
+- Revert "SystemUI: Add support for udfps dim layer"
+- Revert "SystemUI: Remove udfps fwk dimming support"
 - Revert "fixup! udfps: Restore illumination dot for global hbm"
 - Revert "fixup! SystemUI: Add UDFPS framework dimming support"
 - Revert "fixup! SystemUI: Add UDFPS framework dimming support"
@@ -16,13 +18,14 @@ Way less than FOD, but reverting them nonetheless to keep in line with PHH AOSP
 ---
  .../res/drawable-nodpi/udfps_icon_pressed.png | Bin 108 -> 0 bytes
  packages/SystemUI/res/layout/udfps_view.xml   |   6 -
- .../SystemUI/res/values/lineage_config.xml    |  39 -----
- .../systemui/biometrics/UdfpsController.java  |  82 ---------
- .../biometrics/UdfpsControllerOverlay.kt      |  13 --
- .../systemui/biometrics/UdfpsSurfaceView.java | 159 ------------------
- .../android/systemui/biometrics/UdfpsView.kt  |  32 +---
- 7 files changed, 1 insertion(+), 330 deletions(-)
+ .../SystemUI/res/values/lineage_config.xml    |  39 +---
+ .../biometrics/UdfpsControllerOverlay.kt      |  12 -
+ .../systemui/biometrics/UdfpsHelper.kt        | 221 ------------------
+ .../systemui/biometrics/UdfpsSurfaceView.java | 159 -------------
+ .../android/systemui/biometrics/UdfpsView.kt  |  32 +--
+ 7 files changed, 2 insertions(+), 467 deletions(-)
  delete mode 100644 packages/SystemUI/res/drawable-nodpi/udfps_icon_pressed.png
+ delete mode 100644 packages/SystemUI/src/com/android/systemui/biometrics/UdfpsHelper.kt
  delete mode 100644 packages/SystemUI/src/com/android/systemui/biometrics/UdfpsSurfaceView.java
 
 diff --git a/packages/SystemUI/res/drawable-nodpi/udfps_icon_pressed.png b/packages/SystemUI/res/drawable-nodpi/udfps_icon_pressed.png
@@ -53,10 +56,18 @@ index 0fcbfa161ddf..257d238f5c54 100644
 -
  </com.android.systemui.biometrics.UdfpsView>
 diff --git a/packages/SystemUI/res/values/lineage_config.xml b/packages/SystemUI/res/values/lineage_config.xml
-index 79c2865567a7..a708f909d4a9 100644
+index 8c3f635b2cad..64d1dd74f77a 100644
 --- a/packages/SystemUI/res/values/lineage_config.xml
 +++ b/packages/SystemUI/res/values/lineage_config.xml
-@@ -15,45 +15,6 @@
+@@ -1,6 +1,6 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <!--
+-     Copyright (C) 2018-2024 The LineageOS Project
++     Copyright (C) 2018-2022 The LineageOS Project
+ 
+      Licensed under the Apache License, Version 2.0 (the "License");
+      you may not use this file except in compliance with the License.
+@@ -15,43 +15,6 @@
       limitations under the License.
  -->
  <resources>
@@ -68,205 +79,302 @@ index 79c2865567a7..a708f909d4a9 100644
 -
 -    <!-- Array of brightness-alpha LUT for framework dimming -->
 -    <string-array name="config_udfpsDimmingBrightnessAlphaArray" translatable="false">
--          <!-- Example:
 -          <item>0,255</item>
--          <item>1,234</item>
--          <item>3,227</item>
--          <item>8,208</item>
--          <item>16,192</item>
--          <item>27,176</item>
--          <item>41,160</item>
--          <item>61,144</item>
--          <item>80,128</item>
--          <item>104,112</item>
--          <item>130,96</item>
--          <item>158,80</item>
--          <item>188,64</item>
--          <item>221,48</item>
--          <item>250,36</item>
--          <item>255,33</item>
--          -->
+-          <item>1,248</item>
+-          <item>2,242</item>
+-          <item>3,238</item>
+-          <item>4,236</item>
+-          <item>6,236</item>
+-          <item>10,234</item>
+-          <item>20,228</item>
+-          <item>30,222</item>
+-          <item>45,217</item>
+-          <item>70,209</item>
+-          <item>100,200</item>
+-          <item>150,191</item>
+-          <item>227,178</item>
+-          <item>300,167</item>
+-          <item>400,154</item>
+-          <item>500,143</item>
+-          <item>600,133</item>
+-          <item>800,117</item>
+-          <item>1023,109</item>
+-          <item>1130,95</item>
+-          <item>1211,89</item>
+-          <item>1394,79</item>
+-          <item>1598,69</item>
+-          <item>1817,53</item>
+-          <item>2047,46</item>
+-          <item>4095,0</item>
 -    </string-array>
--
--    <!-- Brightness range min for UDFPS dimming -->
--    <integer name="config_udfpsDimmingBrightnessMin">0</integer>
--
--    <!-- Brightness range max for UDFPS dimming -->
--    <integer name="config_udfpsDimmingBrightnessMax">0</integer>
--
--    <!-- The amount of delay to add when disabling the dimming.
--         This is used to prevent flickers due to the dimming being disabled
--         before the screen has had chance to switch out of HBM mode -->
--    <integer name="config_udfpsDimmingDisableDelay">0</integer>
 -
      <!-- Doze: does the double tap sensor need a proximity check? -->
      <bool name="doze_double_tap_proximity_check">false</bool>
  
-diff --git a/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsController.java b/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsController.java
-index 0dc13ff29771..65668b56a9f3 100644
---- a/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsController.java
-+++ b/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsController.java
-@@ -48,7 +48,6 @@ import android.os.PowerManager;
- import android.os.Trace;
- import android.os.VibrationAttributes;
- import android.os.VibrationEffect;
--import android.provider.Settings;
- import android.util.Log;
- import android.view.HapticFeedbackConstants;
- import android.view.LayoutInflater;
-@@ -217,9 +216,6 @@ public class UdfpsController implements DozeReceiver, Dumpable {
-     private boolean mAttemptedToDismissKeyguard;
-     private final Set<Callback> mCallbacks = new HashSet<>();
- 
--    private boolean mUseFrameworkDimming;
--    private int[][] mBrightnessAlphaArray;
--
-     @VisibleForTesting
-     public static final VibrationAttributes UDFPS_VIBRATION_ATTRIBUTES =
-             new VibrationAttributes.Builder()
-@@ -746,8 +742,6 @@ public class UdfpsController implements DozeReceiver, Dumpable {
-         final UdfpsOverlayController mUdfpsOverlayController = new UdfpsOverlayController();
-         mFingerprintManager.setUdfpsOverlayController(mUdfpsOverlayController);
- 
--        initUdfpsFrameworkDimming();
--
-         final IntentFilter filter = new IntentFilter();
-         filter.addAction(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
-         context.registerReceiver(mBroadcastReceiver, filter,
-@@ -970,64 +964,6 @@ public class UdfpsController implements DozeReceiver, Dumpable {
-         return mSensorProps.sensorType == FingerprintSensorProperties.TYPE_UDFPS_OPTICAL;
-     }
- 
--    private void initUdfpsFrameworkDimming() {
--        mUseFrameworkDimming = mContext.getResources().getBoolean(
--                com.android.systemui.res.R.bool.config_udfpsFrameworkDimming);
--
--        if (mUseFrameworkDimming) {
--            String[] array = mContext.getResources().getStringArray(
--                    com.android.systemui.res.R.array.config_udfpsDimmingBrightnessAlphaArray);
--            mBrightnessAlphaArray = new int[array.length][2];
--            for (int i = 0; i < array.length; i++) {
--                String[] s = array[i].split(",");
--                mBrightnessAlphaArray[i][0] = Integer.parseInt(s[0]);
--                mBrightnessAlphaArray[i][1] = Integer.parseInt(s[1]);
--            }
--        }
--    }
--
--    private static int interpolate(int x, int xa, int xb, int ya, int yb) {
--        return ya - (ya - yb) * (x - xa) / (xb - xa);
--    }
--
--    private int getBrightness() {
--        int brightness = Settings.System.getInt(mContext.getContentResolver(),
--                Settings.System.SCREEN_BRIGHTNESS, 100);
--        // Since the brightness is taken from the system settings, we need to interpolate it
--        final int brightnessMin = mContext.getResources().getInteger(
--                com.android.systemui.res.R.integer.config_udfpsDimmingBrightnessMin);
--        final int brightnessMax = mContext.getResources().getInteger(
--                com.android.systemui.res.R.integer.config_udfpsDimmingBrightnessMax);
--        if (brightnessMax > 0) {
--            brightness = interpolate(brightness, 0, 255, brightnessMin, brightnessMax);
--        }
--        return brightness;
--    }
--
--    private void updateViewDimAmount() {
--        if (mOverlay == null || !mUseFrameworkDimming) {
--            return;
--        } else if (isFingerDown()) {
--            int curBrightness = getBrightness();
--            int i, dimAmount;
--            for (i = 0; i < mBrightnessAlphaArray.length; i++) {
--                if (mBrightnessAlphaArray[i][0] >= curBrightness) break;
--            }
--            if (i == 0) {
--                dimAmount = mBrightnessAlphaArray[i][1];
--            } else if (i == mBrightnessAlphaArray.length) {
--                dimAmount = mBrightnessAlphaArray[i-1][1];
--            } else {
--                dimAmount = interpolate(curBrightness,
--                        mBrightnessAlphaArray[i][0], mBrightnessAlphaArray[i-1][0],
--                        mBrightnessAlphaArray[i][1], mBrightnessAlphaArray[i-1][1]);
--            }
--            mOverlay.setDimAmount(dimAmount / 255.0f);
--        } else {
--            mOverlay.setDimAmount(0.0f);
--        }
--    }
--
-     public boolean isFingerDown() {
-         return mOnFingerDown;
-     }
-@@ -1036,7 +972,6 @@ public class UdfpsController implements DozeReceiver, Dumpable {
-         mFingerprintManager.onUdfpsUiEvent(FingerprintManager.UDFPS_UI_READY, requestId,
-                 mSensorProps.sensorId);
-         mLatencyTracker.onActionEnd(LatencyTracker.ACTION_UDFPS_ILLUMINATE);
--        updateViewDimAmount();
-     }
- 
-     private void onFingerDown(
-@@ -1158,23 +1093,6 @@ public class UdfpsController implements DozeReceiver, Dumpable {
-         mOnFingerDown = false;
-         unconfigureDisplay(view);
-         cancelAodSendFingerUpAction();
--
--        // Add a delay to ensure that the dim amount is updated after the display has had chance
--        // to switch out of HBM mode. The delay, in ms is stored in config_udfpsDimmingDisableDelay.
--        // If the delay is 0, the dim amount will be updated immediately.
--        final int delay = mContext.getResources().getInteger(
--                com.android.systemui.res.R.integer.config_udfpsDimmingDisableDelay);
--        if (delay > 0) {
--            mFgExecutor.executeDelayed(() -> {
--                // A race condition exists where the overlay is destroyed before the dim amount
--                // is updated. This check ensures that the overlay is still valid.
--                if (mOverlay != null && mOverlay.matchesRequestId(requestId)) {
--                    updateViewDimAmount();
--                }
--            }, delay);
--        } else {
--            updateViewDimAmount();
--        }
-     }
- 
-     /**
 diff --git a/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsControllerOverlay.kt b/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsControllerOverlay.kt
-index 4983610df57a..dae6d08f7331 100644
+index 07c8e4e641de..16865ca809d9 100644
 --- a/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsControllerOverlay.kt
 +++ b/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsControllerOverlay.kt
-@@ -131,8 +131,6 @@ class UdfpsControllerOverlay @JvmOverloads constructor(
+@@ -158,16 +158,6 @@ class UdfpsControllerOverlay @JvmOverloads constructor(
  
      private var overlayTouchListener: TouchExplorationStateChangeListener? = null
  
--    private val frameworkDimming = context.getResources().getBoolean(
--        R.bool.config_udfpsFrameworkDimming)
+-    private val useFrameworkDimming = context.resources.getBoolean(
+-        com.android.systemui.res.R.bool.config_udfpsFrameworkDimming
+-    )
+-
+-    private val udfpsHelper: UdfpsHelper? = if (useFrameworkDimming) {
+-        UdfpsHelper(context, windowManager, shadeInteractor, requestReason)
+-    } else {
+-        null
+-    }
+-
      private val coreLayoutParams = WindowManager.LayoutParams(
          WindowManager.LayoutParams.TYPE_NAVIGATION_BAR_PANEL,
          0 /* flags set in computeLayoutParams() */,
-@@ -144,23 +142,12 @@ class UdfpsControllerOverlay @JvmOverloads constructor(
-         layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
-         flags = (Utils.FINGERPRINT_OVERLAY_LAYOUT_PARAM_FLAGS or
-                 WindowManager.LayoutParams.FLAG_SPLIT_TOUCH)
--        if (frameworkDimming) {
--            flags = flags or WindowManager.LayoutParams.FLAG_DIM_BEHIND
--        }
-         privateFlags = WindowManager.LayoutParams.PRIVATE_FLAG_TRUSTED_OVERLAY
--        dimAmount = 0.0f
-         // Avoid announcing window title.
-         accessibilityTitle = " "
-         inputFeatures = WindowManager.LayoutParams.INPUT_FEATURE_SPY
+@@ -293,7 +283,6 @@ class UdfpsControllerOverlay @JvmOverloads constructor(
      }
  
--    var dimAmount
--        get() = coreLayoutParams.dimAmount
--        set(value) {
--            coreLayoutParams.dimAmount = value
--            windowManager.updateViewLayout(getTouchOverlay(), coreLayoutParams)
+     private fun addViewNowOrLater(view: View, animation: UdfpsAnimationViewController<*>?) {
+-        udfpsHelper?.addDimLayer()
+         if (udfpsViewPerformance()) {
+             addViewRunnable = kotlinx.coroutines.Runnable {
+                 Trace.setCounter("UdfpsAddView", 1)
+@@ -428,7 +417,6 @@ class UdfpsControllerOverlay @JvmOverloads constructor(
+         if (DeviceEntryUdfpsRefactor.isEnabled) {
+             udfpsDisplayModeProvider.disable(null)
+         }
+-        udfpsHelper?.removeDimLayer()
+         getTouchOverlay()?.apply {
+             if (udfpsViewPerformance()) {
+                 if (this.parent != null) {
+diff --git a/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsHelper.kt b/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsHelper.kt
+deleted file mode 100644
+index caa3feda2161..000000000000
+--- a/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsHelper.kt
++++ /dev/null
+@@ -1,221 +0,0 @@
+-/*
+- * Copyright (C) 2024 The LineageOS Project
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-
+-package com.android.systemui.biometrics
+-
+-import android.animation.ValueAnimator
+-import android.annotation.UiThread
+-import android.content.Context
+-import android.graphics.Color
+-import android.graphics.PixelFormat
+-import android.hardware.biometrics.BiometricRequestConstants.REASON_AUTH_KEYGUARD
+-import android.hardware.biometrics.BiometricRequestConstants.RequestReason
+-import android.hardware.display.DisplayManager
+-import android.util.Log
+-import android.view.Display
+-import android.view.View
+-import android.view.WindowManager
+-import androidx.core.view.isVisible
+-import androidx.lifecycle.Lifecycle
+-import androidx.lifecycle.repeatOnLifecycle
+-import com.android.systemui.lifecycle.repeatWhenAttached
+-import com.android.systemui.shade.domain.interactor.ShadeInteractor
+-import kotlinx.coroutines.CoroutineScope
+-import kotlinx.coroutines.Job
+-import kotlinx.coroutines.launch
+-
+-private const val TAG = "UdfpsHelper"
+-
+-/**
+- * Facilitates implementations that use GHBM where dim layer
+- * and pressed icon aren't controlled by kernel
+- */
+-@UiThread
+-class UdfpsHelper(
+-    private val context: Context,
+-    private val windowManager: WindowManager,
+-    private val shadeInteractor: ShadeInteractor,
+-    @RequestReason val requestReason: Int,
+-    private var view: View = View(context).apply {
+-        setBackgroundColor(Color.BLACK)
+-        visibility = View.GONE
+-    }
+-) {
+-    private val displayManager = context.getSystemService(DisplayManager::class.java)!!
+-    private val isKeyguard = requestReason == REASON_AUTH_KEYGUARD
+-    private var newIsQsExpanded = false
+-
+-    private val currentBrightness: Float get() =
+-        displayManager.getBrightness(Display.DEFAULT_DISPLAY)
+-    private val minBrightness: Float = context.resources
+-        .getFloat(com.android.internal.R.dimen.config_screenBrightnessSettingMinimumFloat)
+-    private val maxBrightness: Float = context.resources
+-        .getFloat(com.android.internal.R.dimen.config_screenBrightnessSettingMaximumFloat)
+-    private val brightnessAlphaMap: Map<Int, Int> = context.resources
+-        .getStringArray(com.android.systemui.res.R.array.config_udfpsDimmingBrightnessAlphaArray)
+-        .associate {
+-            val (brightness, alpha) = it.split(",").map { value -> value.trim().toInt() }
+-            brightness to alpha
 -        }
 -
-     /** If the overlay is currently showing. */
-     val isShowing: Boolean
-         get() = getTouchOverlay() != null
+-    private val dimLayoutParams = WindowManager.LayoutParams(
+-        WindowManager.LayoutParams.TYPE_NAVIGATION_BAR_PANEL,
+-        0 /* flags are set in computeLayoutParams() */,
+-        PixelFormat.TRANSPARENT
+-    ).apply {
+-        title = "Dim Layer for UDFPS"
+-        fitInsetsTypes = 0
+-        gravity = android.view.Gravity.TOP or android.view.Gravity.LEFT
+-        layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+-        flags = Utils.FINGERPRINT_OVERLAY_LAYOUT_PARAM_FLAGS or
+-                WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+-        privateFlags = WindowManager.LayoutParams.PRIVATE_FLAG_TRUSTED_OVERLAY or
+-                WindowManager.LayoutParams.PRIVATE_FLAG_EXCLUDE_FROM_SCREEN_MAGNIFICATION
+-        // Avoid announcing window title
+-        accessibilityTitle = " "
+-        inputFeatures = WindowManager.LayoutParams.INPUT_FEATURE_SPY
+-    }
+-
+-    private val alphaAnimator = ValueAnimator().apply {
+-        duration = 800L
+-        addUpdateListener { animator ->
+-            view.alpha = animator.animatedValue as Float
+-            dimLayoutParams.alpha = animator.animatedValue as Float
+-            try {
+-                windowManager.updateViewLayout(view, dimLayoutParams)
+-            } catch (e: IllegalArgumentException) {
+-                Log.e(TAG, "View not attached to WindowManager", e)
+-            }
+-        }
+-    }
+-
+-    private val displayListener = object : DisplayManager.DisplayListener {
+-        override fun onDisplayAdded(displayId: Int) {}
+-
+-        override fun onDisplayChanged(displayId: Int) {
+-            if (displayId == Display.DEFAULT_DISPLAY) {
+-                brightnessToAlpha()
+-                windowManager.updateViewLayout(view, dimLayoutParams)
+-            }
+-        }
+-
+-        override fun onDisplayRemoved(displayId: Int) {}
+-    }
+-
+-    private fun interpolate(
+-        value: Float,
+-        fromMin: Int,
+-        fromMax: Int,
+-        toMin: Int,
+-        toMax: Int
+-    ): Float {
+-        return toMin + (value - fromMin) * (toMax - toMin) / (fromMax - fromMin)
+-    }
+-
+-    private fun interpolateAlpha(brightness: Int): Float {
+-        val lowerEntry = brightnessAlphaMap.entries
+-            .lastOrNull { it.key <= brightness } ?: return 0f
+-        val upperEntry = brightnessAlphaMap.entries
+-            .firstOrNull { it.key >= brightness } ?: return 0f
+-        val (lowerBrightness, lowerAlpha) = lowerEntry
+-        val (upperBrightness, upperAlpha) = upperEntry
+-
+-        return interpolate(
+-            brightness.toFloat(),
+-            lowerBrightness,
+-            upperBrightness,
+-            lowerAlpha,
+-            upperAlpha
+-        ).div(255.0f)
+-    }
+-
+-    // The current function does not account for Doze state where the brightness can go lower
+-    // than what is set on config_screenBrightnessSettingMinimumFloat.
+-    // While it's possible to operate with floats, the dimming array was made by referencing
+-    // brightness_alpha_lut array from the kernel. This provides a comparable array.
+-    private fun brightnessToAlpha() {
+-        val adjustedBrightness =
+-            (currentBrightness.coerceIn(minBrightness, maxBrightness) * 4095).toInt()
+-
+-        val targetAlpha = brightnessAlphaMap[adjustedBrightness]?.div(255.0f)
+-            ?: interpolateAlpha(adjustedBrightness)
+-
+-        Log.i(TAG, "Adjusted Brightness: $adjustedBrightness, Alpha: $targetAlpha")
+-
+-        alphaAnimator.setFloatValues(view.alpha, targetAlpha)
+-        // Set the dim for both the view and the layout
+-        view.alpha = targetAlpha
+-        dimLayoutParams.alpha = targetAlpha
+-    }
+-
+-    fun addDimLayer() {
+-        brightnessToAlpha()
+-        windowManager.addView(view, dimLayoutParams)
+-    }
+-
+-    fun removeDimLayer() {
+-        windowManager.removeView(view)
+-    }
+-
+-    init {
+-        view.repeatWhenAttached {
+-            repeatOnLifecycle(Lifecycle.State.CREATED) {
+-                listenForQsExpansion(this)
+-
+-                if (isKeyguard) {
+-                    listenForShadeTouchability(this)
+-                }
+-            }
+-        }
+-
+-        if (!isKeyguard) {
+-            view.isVisible = true
+-        }
+-    }
+-
+-    // We don't have ways to get temporary brightness when operating the brightness slider.
+-    // Therefore, the dim layer is hidden when the slider is expected to be utilized.
+-    private suspend fun listenForQsExpansion(scope: CoroutineScope): Job {
+-        return scope.launch {
+-            shadeInteractor.qsExpansion.collect { qsExpansion ->
+-                if (qsExpansion == 1f && !newIsQsExpanded) {
+-                    newIsQsExpanded = true
+-                    displayManager.registerDisplayListener(
+-                        displayListener, null, DisplayManager.EVENT_FLAG_DISPLAY_BRIGHTNESS
+-                    )
+-                    view.isVisible = false
+-                } else if (qsExpansion == 0f && newIsQsExpanded) {
+-                    newIsQsExpanded = false
+-                    displayManager.unregisterDisplayListener(displayListener)
+-                    view.isVisible = true
+-                }
+-            }
+-        }
+-    }
+-
+-    private suspend fun listenForShadeTouchability(scope: CoroutineScope): Job {
+-        return scope.launch {
+-            shadeInteractor.isShadeTouchable.collect {
+-                view.isVisible = it
+-                if (view.isVisible) {
+-                    brightnessToAlpha()
+-                    alphaAnimator.cancel()
+-                    alphaAnimator.start()
+-                }
+-            }
+-        }
+-    }
+-}
 diff --git a/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsSurfaceView.java b/packages/SystemUI/src/com/android/systemui/biometrics/UdfpsSurfaceView.java
 deleted file mode 100644
 index 2e0e9491dd5b..000000000000
