@@ -1,7 +1,7 @@
-From da1058d3e5aa788e26dacdc353aeaa9c43da60fe Mon Sep 17 00:00:00 2001
+From 668a0677a644a5be4abd21fe5e083991af6818c2 Mon Sep 17 00:00:00 2001
 From: Andy CrossGate Yan <GeForce8800Ultra@gmail.com>
 Date: Sat, 24 Sep 2022 11:40:52 +0000
-Subject: [PATCH 1/2] vendor_lineage: Commonly build some packages
+Subject: [PATCH] vendor_lineage: Commonly build some packages
 
 These were in handheld_product.mk and thus weren't included in GSI targets:
 Contacts, DeskClock, Gallery2, SettingsIntelligence, fwb overlays
@@ -13,7 +13,7 @@ Change-Id: I00cc5918164ed70c612c5caa31eb8d2d0cd05b62
  2 files changed, 6 insertions(+), 1 deletion(-)
 
 diff --git a/config/common_mobile.mk b/config/common_mobile.mk
-index d11520ac..850e60ff 100644
+index 176481eb..c43845cb 100644
 --- a/config/common_mobile.mk
 +++ b/config/common_mobile.mk
 @@ -17,7 +17,9 @@ PRODUCT_PRODUCT_PROPERTIES += \
